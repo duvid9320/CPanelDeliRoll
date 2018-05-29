@@ -1,71 +1,68 @@
 <?php
 
-class GestorArticulos{
+class GestorArticulos {
+    #MOSTRAR IMAGEN ARTÍCULO
+    #------------------------------------------------------------
 
-	#MOSTRAR IMAGEN ARTÍCULO
-	#------------------------------------------------------------
-	public function mostrarImagenController($datos){
+    public function mostrarImagenController($datos) {
 
-		list($ancho, $alto) = getimagesize($datos);
+        list($ancho, $alto) = getimagesize($datos);
 
-		if($ancho < 800 || $alto < 400){
+        if ($ancho < 800 || $alto < 400) {
 
-			echo 0;
+            echo 0;
+        } else {
 
-		}
+            $aleatorio = mt_rand(100, 999);
+            $ruta = "../../views/images/articulos/temp/articulo" . $aleatorio . ".jpg";
+            $origen = imagecreatefromjpeg($datos);
+            $destino = imagecrop($origen, ["x" => 0, "y" => 0, "width" => 800, "height" => 400]);
+            imagejpeg($destino, $ruta);
 
-		else{
+            echo $ruta;
+        }
+    }
 
-			$aleatorio = mt_rand(100, 999);
-			$ruta = "../../views/images/articulos/temp/articulo".$aleatorio.".jpg";
-			$origen = imagecreatefromjpeg($datos);
-			$destino = imagecrop($origen, ["x"=>0, "y"=>0, "width"=>800, "height"=>400]);
-			imagejpeg($destino, $ruta);
+    #GUARDAR ARTICULO
+    #-----------------------------------------------------------
 
-			echo $ruta;
-		}
+    public function guardarArticuloController() {
 
-	}
+        if (isset($_POST["tituloArticulo"])) {
 
-	#GUARDAR ARTICULO
-	#-----------------------------------------------------------
+            $imagen = $_FILES["imagen"]["tmp_name"];
 
-	public function guardarArticuloController(){
+            $borrar = glob("views/images/articulos/temp/*");
 
-		if(isset($_POST["tituloArticulo"])){
+            foreach ($borrar as $file) {
 
-			$imagen = $_FILES["imagen"]["tmp_name"];
+                unlink($file);
+            }
 
-			$borrar = glob("views/images/articulos/temp/*");
+            $aleatorio = mt_rand(100, 999);
 
-			foreach($borrar as $file){
+            $ruta = "views/images/articulos/articulo" . $aleatorio . ".jpg";
 
-				unlink($file);
+            $origen = imagecreatefromjpeg($imagen);
 
-			}
+            $destino = imagecrop($origen, ["x" => 0, "y" => 0, "width" => 800, "height" => 400]);
 
-			$aleatorio = mt_rand(100, 999);
+            imagejpeg($destino, $ruta);
 
-			$ruta = "views/images/articulos/articulo".$aleatorio.".jpg";
+            $datosController = array("titulo" => $_POST["tituloArticulo"],
+                "introduccion" => $_POST["introArticulo"] . "...",
+                "ruta" => $ruta,
+                "contenido" => $_POST["contenidoArticulo"],
+                "precio" => $_POST["precio"],
+                "estado" => isset($_POST['estado']) && $_POST['estado'] == 'ON' ? '1' : '0',
+                "idCategoria" => $_POST["idCategoria"]
+            );
 
-			$origen = imagecreatefromjpeg($imagen);
+            $respuesta = GestorArticulosModel::guardarArticuloModel($datosController, "articulos");
 
-			$destino = imagecrop($origen, ["x"=>0, "y"=>0, "width"=>800, "height"=>400]);
+            if ($respuesta == "ok") {
 
-			imagejpeg($destino, $ruta);
-
-			$datosController = array("titulo"=>$_POST["tituloArticulo"],
-				                     "introduccion"=>$_POST["introArticulo"]."...",
-			 	                      "ruta"=>$ruta,
-			 	                      "contenido"=>$_POST["contenidoArticulo"],
-			 	                      "precio"=>$_POST["precio"],
-			 	                      "estado"=>$_POST["estado"]);
-
-			$respuesta = GestorArticulosModel::guardarArticuloModel($datosController, "articulos");
-
-			if($respuesta == "ok"){
-
-				echo'<script>
+                echo'<script>
 
 					swal({
 						  title: "¡OK!",
@@ -83,95 +80,89 @@ class GestorArticulos{
 
 
 				</script>';
+            } else {
 
-			}
+                var_dump($respuesta);
+            }
+        }
+    }
 
-			else{
+    #MOSTRAR ARTICULOS
+    #-----------------------------------------------------------
 
-				echo $respuesta;
+    public function mostrarArticulosController() {
 
-			}
+        $respuesta = GestorArticulosModel::mostrarArticulosModel("articulos");
 
-		}
+        foreach ($respuesta as $row => $item) {
+            ?>
+            <li id="<?php echo $item["id"] ?>" class="bloqueArticulo">
+                <span class="handleArticle">
+                    <a href="index.php?action=articulos&idBorrar=<?php echo $item["id"] . '&rutaImagen=' . $item["ruta"] ?>">
+                        <i class="fa fa-times btn btn-danger"></i>
+                    </a>
+                    <i class="fa fa-pencil btn btn-primary editarArticulo"></i>	
+                </span>
+                <img src="<?php echo $item["ruta"] ?>" class="img-thumbnail">
+                <h1><?php echo $item["titulo"] ?></h1>
+                <h2><?php echo $item["precio"] ?></h2>
+                <p><?php echo $item["introduccion"] ?></p>
+                <input id="contenido" type="hidden" name="contenido" value="<?php echo $item["contenido"] ?>">
+                <input id="estado" type="hidden" name="estado" value="<?php echo $item["estado"] ?>">
+                <a href="#articulo<?php echo $item["id"] ?>" data-toggle="modal">
+                    <button class="btn btn-default">Leer Más</button>
+                </a>
 
-	}
+                <hr>
 
-	#MOSTRAR ARTICULOS
-	#-----------------------------------------------------------
+            </li>
 
-	public function mostrarArticulosController(){
+            <div id="articulo<?php echo $item["id"] ?>" class="modal fade">
 
-		$respuesta = GestorArticulosModel::mostrarArticulosModel("articulos");		
+                <div class="modal-dialog modal-content">
 
-		foreach($respuesta as $row => $item) {
+                    <div class="modal-header" style="border:1px solid #eee">
 
-			echo ' <li id="'.$item["id"].'" class="bloqueArticulo">
-					<span class="handleArticle">
-					<a href="index.php?action=articulos&idBorrar='.$item["id"].'&rutaImagen='.$item["ruta"].'">
-						<i class="fa fa-times btn btn-danger"></i>
-					</a>
-					<i class="fa fa-pencil btn btn-primary editarArticulo"></i>	
-					</span>
-					<img src="'.$item["ruta"].'" class="img-thumbnail">
-					<h1>'.$item["titulo"].'</h1>
-					<p>'.$item["introduccion"].'</p>
-					<input type="hidden" value="'.$item["contenido"].'">
-					<a href="#articulo'.$item["id"].'" data-toggle="modal">
-					<button class="btn btn-default">Leer Más</button>
-					</a>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h3 class="modal-title"><?php echo $item["titulo"] ?></h3>
 
-					<hr>
+                    </div>
 
-				</li>
+                    <div class="modal-body" style="border:1px solid #eee">
 
-				<div id="articulo'.$item["id"].'" class="modal fade">
+                        <img src="<?php echo $item["ruta"] ?>" width="100%" style="margin-bottom:20px">
+                        <p class="parrafoContenido"><?php echo $item["contenido"] ?></p>
 
-					<div class="modal-dialog modal-content">
+                    </div>
 
-						<div class="modal-header" style="border:1px solid #eee">
-				        
-							<button type="button" class="close" data-dismiss="modal">&times;</button>
-						 <h3 class="modal-title">'.$item["titulo"].'</h3>
-			        
-						</div>
+                    <div class="modal-footer" style="border:1px solid #eee">
 
-						<div class="modal-body" style="border:1px solid #eee">
-			        
-							<img src="'.$item["ruta"].'" width="100%" style="margin-bottom:20px">
-							<p class="parrafoContenido">'.$item["contenido"].'</p>
-			        
-						</div>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 
-						<div class="modal-footer" style="border:1px solid #eee">
-			        
-							<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-			        
-						</div>
+                    </div>
 
-					</div>
+                </div>
 
-				</div>';
+            </div> <?php
+        }
+    }
 
-		}
+    #BORRAR ARTICULO
+    #------------------------------------
 
-	}
+    public function borrarArticuloController() {
 
-	#BORRAR ARTICULO
-	#------------------------------------
+        if (isset($_GET["idBorrar"])) {
 
-	public function borrarArticuloController(){
+            unlink($_GET["rutaImagen"]);
 
-		if(isset($_GET["idBorrar"])){
+            $datosController = $_GET["idBorrar"];
 
-			unlink($_GET["rutaImagen"]);
+            $respuesta = GestorArticulosModel::borrarArticuloModel($datosController, "articulos");
 
-			$datosController = $_GET["idBorrar"];
+            if ($respuesta == "ok") {
 
-			$respuesta = GestorArticulosModel::borrarArticuloModel($datosController, "articulos");
-
-			if($respuesta == "ok"){
-
-					echo'<script>
+                echo'<script>
 
 					swal({
 						  title: "¡OK!",
@@ -189,68 +180,64 @@ class GestorArticulos{
 
 
 				</script>';
+            }
+        }
+    }
 
-			}
-		}
+    #ACTUALIZAR ARTICULO
+    #-----------------------------------------------------------
 
-	}
+    public function editarArticuloController() {
 
-	#ACTUALIZAR ARTICULO
-	#-----------------------------------------------------------
+        $ruta = "";
 
-	public function editarArticuloController(){
+        if (isset($_POST["editarTitulo"])) {
 
-		$ruta = "";
+            if (isset($_FILES["editarImagen"]["tmp_name"])) {
 
-		if(isset($_POST["editarTitulo"])){
+                $imagen = $_FILES["editarImagen"]["tmp_name"];
 
-			if(isset($_FILES["editarImagen"]["tmp_name"])){	
+                $aleatorio = mt_rand(100, 999);
 
-				$imagen = $_FILES["editarImagen"]["tmp_name"];
+                $ruta = "views/images/articulos/articulo" . $aleatorio . ".jpg";
 
-				$aleatorio = mt_rand(100, 999);
+                $origen = imagecreatefromjpeg($imagen);
 
-				$ruta = "views/images/articulos/articulo".$aleatorio.".jpg";
+                $destino = imagecrop($origen, ["x" => 0, "y" => 0, "width" => 800, "height" => 400]);
 
-				$origen = imagecreatefromjpeg($imagen);
+                imagejpeg($destino, $ruta);
 
-				$destino = imagecrop($origen, ["x"=>0, "y"=>0, "width"=>800, "height"=>400]);
+                $borrar = glob("views/images/articulos/temp/*");
 
-				imagejpeg($destino, $ruta);
+                foreach ($borrar as $file) {
 
-				$borrar = glob("views/images/articulos/temp/*");
+                    unlink($file);
+                }
+            }
 
-				foreach($borrar as $file){
-				
-					unlink($file);
-				
-				}
+            if ($ruta == "") {
 
-			}
+                $ruta = $_POST["fotoAntigua"];
+            } else {
 
-			if($ruta == ""){
+                unlink($_POST["fotoAntigua"]);
+            }
+            
+            $datosController = array("id" => $_POST["id"],
+                "titulo" => $_POST["editarTitulo"],
+                "introduccion" => $_POST["editarIntroduccion"],
+                "ruta" => $ruta,
+                "contenido" => $_POST["editarContenido"],
+                "precio" => $_POST['editarPrecio'],
+                "idCategoria" => $_POST['editarIdCategoria'],
+                "estado" => isset($_POST['editarEstado']) ? "1":"0" 
+                );
 
-				$ruta = $_POST["fotoAntigua"];
+            $respuesta = GestorArticulosModel::editarArticuloModel($datosController, "articulos");
 
-			}
+            if ($respuesta == "ok") {
 
-			else{
-
-				unlink($_POST["fotoAntigua"]);
-
-			}
-
-			$datosController = array("id"=>$_POST["id"],
-			                         "titulo"=>$_POST["editarTitulo"],
-								     "introduccion"=>$_POST["editarIntroduccion"],
-								     "ruta"=>$ruta,
-								     "contenido"=>$_POST["editarContenido"]);
-
-			$respuesta = GestorArticulosModel::editarArticuloModel($datosController, "articulos");
-
-			if($respuesta == "ok"){
-
-				echo'<script>
+                echo'<script>
 
 					swal({
 						  title: "¡OK!",
@@ -268,41 +255,36 @@ class GestorArticulos{
 
 
 				</script>';
+            } else {
 
-			}
+                var_dump($respuesta);
+            }
+        }
+    }
 
-			else{
+    #ACTUALIZAR ORDEN 
+    #---------------------------------------------------
 
-				echo $respuesta;
+    public function actualizarOrdenController($datos) {
 
-			}
+        GestorArticulosModel::actualizarOrdenModel($datos, "articulos");
 
-		}
+        $respuesta = GestorArticulosModel::seleccionarOrdenModel("articulos");
 
-	}
+        foreach ($respuesta as $row => $item) {
 
-	#ACTUALIZAR ORDEN 
-	#---------------------------------------------------
-	public function actualizarOrdenController($datos){
-
-		GestorArticulosModel::actualizarOrdenModel($datos, "articulos");
-
-		$respuesta = GestorArticulosModel::seleccionarOrdenModel("articulos");
-
-		foreach($respuesta as $row => $item){
-
-			echo ' <li id="'.$item["id"].'" class="bloqueArticulo">
+            echo ' <li id="' . $item["id"] . '" class="bloqueArticulo">
 					<span class="handleArticle">
-					<a href="index.php?action=articulos&idBorrar='.$item["id"].'&rutaImagen='.$item["ruta"].'">
+					<a href="index.php?action=articulos&idBorrar=' . $item["id"] . '&rutaImagen=' . $item["ruta"] . '">
 						<i class="fa fa-times btn btn-danger"></i>
 					</a>
 					<i class="fa fa-pencil btn btn-primary editarArticulo"></i>	
 					</span>
-					<img src="'.$item["ruta"].'" class="img-thumbnail">
-					<h1>'.$item["titulo"].'</h1>
-					<p>'.$item["introduccion"].'</p>
-					<input type="hidden" value="'.$item["contenido"].'">
-					<a href="#articulo'.$item["id"].'" data-toggle="modal">
+					<img src="' . $item["ruta"] . '" class="img-thumbnail">
+					<h1>' . $item["titulo"] . '</h1>
+					<p>' . $item["introduccion"] . '</p>
+					<input type="hidden" value="' . $item["contenido"] . '">
+					<a href="#articulo' . $item["id"] . '" data-toggle="modal">
 					<button class="btn btn-default">Leer Más</button>
 					</a>
 
@@ -310,21 +292,21 @@ class GestorArticulos{
 
 				</li>
 
-				<div id="articulo'.$item["id"].'" class="modal fade">
+				<div id="articulo' . $item["id"] . '" class="modal fade">
 
 					<div class="modal-dialog modal-content">
 
 						<div class="modal-header" style="border:1px solid #eee">
 				        
 							<button type="button" class="close" data-dismiss="modal">&times;</button>
-						 <h3 class="modal-title">'.$item["titulo"].'</h3>
+						 <h3 class="modal-title">' . $item["titulo"] . '</h3>
 			        
 						</div>
 
 						<div class="modal-body" style="border:1px solid #eee">
 			        
-							<img src="'.$item["ruta"].'" width="100%" style="margin-bottom:20px">
-							<p class="parrafoContenido">'.$item["contenido"].'</p>
+							<img src="' . $item["ruta"] . '" width="100%" style="margin-bottom:20px">
+							<p class="parrafoContenido">' . $item["contenido"] . '</p>
 			        
 						</div>
 
@@ -337,10 +319,7 @@ class GestorArticulos{
 					</div>
 
 				</div>';
+        }
+    }
 
-		}
-
-
-	}
-	
 }

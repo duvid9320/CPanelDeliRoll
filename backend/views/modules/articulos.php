@@ -27,7 +27,7 @@ ARTÍCULOS ADMINISTRABLE
 
 
             <label class="col-form-label" for="idCategoria">Selecciona la Categoria del articulo</label>
-            <select id="autos" name="idCategoria" data-live-search="true" class="col-form-control form-control">
+            <select id="idCategoriaSelect" name="idCategoria" data-live-search="true" class="col-form-control form-control">
                 <?php
                 $categoriaModel = new Categoria();
                 $categorias = $categoriaModel->getCategorias();

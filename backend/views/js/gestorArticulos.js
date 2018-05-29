@@ -97,11 +97,19 @@ $(".editarArticulo").click(function(){
 	idArticulo = $(this).parent().parent().attr("id");
 	rutaImagen = $("#"+idArticulo).children("img").attr("src");
 	titulo = $("#"+idArticulo).children("h1").html();
+	precio = $("#"+idArticulo).children("h2").html();
 	introduccion = $("#"+idArticulo).children("p").html();
-	contenido = $("#"+idArticulo).children("input").val();
+	contenido = $("#"+idArticulo).children("#contenido").val();
+	estado = $("#"+idArticulo).children("#estado").val();
+        
+        selectIdCategoria = document.getElementById('idCategoriaSelect');
+        wrap = document.createElement('div');
+        cloned = selectIdCategoria.cloneNode(true);
+        cloned.name = 'editarIdCategoria';
+        wrap.appendChild(cloned);
 
-	$("#"+idArticulo).html('<form method="post" enctype="multipart/form-data"><span><input style="width:10%; padding:5px 0; margin-top:4px" type="submit" class="btn btn-primary pull-right" value="Guardar"></span><div id="editarImagen"><input style="display:none" type="file" id="subirNuevaFoto" class="btn btn-default"><div id="nuevaFoto"><span class="fa fa-times cambiarImagen"></span><img src="'+rutaImagen+'" class="img-thumbnail"></div></div><input type="text" value="'+titulo+'" name="editarTitulo"><textarea cols="30" rows="5" name="editarIntroduccion">'+introduccion+'</textarea><textarea name="editarContenido" id="editarContenido" cols="30" rows="10">'+contenido+'</textarea><input type="hidden" value="'+idArticulo+'" name="id"><input type="hidden" value="'+rutaImagen+'" name="fotoAntigua"><hr></form>');
-
+	$("#"+idArticulo).html('<form method="post" enctype="multipart/form-data"><span><input style="width:10%; padding:5px 0; margin-top:4px" type="submit" class="btn btn-primary pull-right" value="Guardar"></span><div id="editarImagen"><input style="display:none" type="file" id="subirNuevaFoto" class="btn btn-default"><div id="nuevaFoto"><span class="fa fa-times cambiarImagen"></span><img src="'+rutaImagen+'" class="img-thumbnail"></div></div>'+wrap.innerHTML+'<input type="text" value="'+titulo+'" name="editarTitulo"><input type="text" value="'+precio+'" name="editarPrecio"><textarea cols="30" rows="5" name="editarIntroduccion">'+introduccion+'</textarea><textarea name="editarContenido" id="editarContenido" cols="30" rows="10">'+contenido+'</textarea><input type="hidden" value="'+idArticulo+'" name="id"><input type="hidden" value="'+rutaImagen+'" name="fotoAntigua"><input id="editarEstado" class="form-check-input" type="checkbox" name="editarEstado" value="ON" '+(estado == '1' ? 'checked="checked"': '' )+' /><label class="form-check-label" for="editarEstado">¿Está Disponible?</label><hr></form>');
+        
 	$(".cambiarImagen").click(function(){
 	
 		$(this).hide();
@@ -209,6 +217,7 @@ $("#ordenarArticulos").click(function(){
 	$("#editarArticulo hr").hide()
 	$("#editarArticulo div").remove()
 	$(".bloqueArticulo h1").css({"font-size":"14px","position":"absolute","padding":"10px", "top":"-15px"})
+	$(".bloqueArticulo h2").css({"font-size":"14px","position":"absolute","padding":"10px", "top":"-15px"})
 	$(".bloqueArticulo").css({"padding":"2px"})
 	$("#editarArticulo span").html('<i class="glyphicon glyphicon-move" style="padding:8px"></i>')
 

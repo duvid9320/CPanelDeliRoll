@@ -2,134 +2,126 @@
 
 require_once "conexion.php";
 
-class GestorArticulosModel{
+class GestorArticulosModel {
+    #GUARDAR ARTICULO
+    #------------------------------------------------------------
 
-	#GUARDAR ARTICULO
-	#------------------------------------------------------------
+    public function guardarArticuloModel($datosModel, $tabla) {
 
-	public function guardarArticuloModel($datosModel, $tabla){
+        $stmt = Conexion::conectar()->prepare("INSERT INTO $tabla (titulo, introduccion, ruta, contenido, orden, precio, estado, idCategoria) VALUES (:titulo, :introduccion, :ruta, :contenido, :orden, :precio, :estado, :idCategoria)");
 
-		$stmt = Conexion::conectar()->prepare("INSERT INTO $tabla (titulo, introduccion, ruta, contenido, precio, estado) VALUES (:titulo, :introduccion, :ruta, :contenido, :precio, :estado)");
+        $stmt->bindParam(":titulo", $datosModel["titulo"]);
+        $stmt->bindParam(":introduccion", $datosModel["introduccion"]);
+        $stmt->bindParam(":ruta", $datosModel["ruta"]);
+        $stmt->bindParam(":contenido", $datosModel["contenido"]);
+        $stmt->bindParam(":precio", $datosModel["precio"]);
+        $stmt->bindParam(":estado", $datosModel["estado"]);
+        $stmt->bindParam(":idCategoria", $datosModel["idCategoria"]);
+        $stmt->bindParam(":orden", $orden = '1');
+        
+        var_dump($datosModel);
+        var_dump($stmt);
+        
+         try{
+            return $stmt->execute() ? "ok" : $stmt->errorInfo();
+        } catch (Exception $ex) {
+            return $ex->getTraceAsString();
+        } finally {
+            $stmt->closeCursor();
+        }
+    }
 
-		$stmt -> bindParam(":titulo", $datosModel["titulo"], PDO::PARAM_STR);
-		$stmt -> bindParam(":introduccion", $datosModel["introduccion"], PDO::PARAM_STR);
-		$stmt -> bindParam(":ruta", $datosModel["ruta"], PDO::PARAM_STR);
-		$stmt -> bindParam(":contenido", $datosModel["contenido"], PDO::PARAM_STR);
-		$stmt -> bindParam(":precio", $datosModel["precio"], PDO::PARAM_STR);
-		$stmt -> bindParam(":estado", $datosModel["estado"], PDO::PARAM_BOOL);
+    #MOSTRAR ARTÍCULOS
+    #------------------------------------------------------
 
-		if($stmt->execute()){
+    public function mostrarArticulosModel($tabla) {
 
-			return "ok";
-		}
+        $stmt = Conexion::conectar()->prepare("SELECT id, titulo, introduccion, ruta, contenido, precio, estado FROM $tabla ORDER BY orden ASC");
 
-		else{
+        $stmt->execute();
 
-			return "error";
-		}
+        return $stmt->fetchAll();
 
-		$stmt->close();
+        $stmt->close();
+    }
 
-	}
+    #BORRAR ARTICULOS
+    #-----------------------------------------------------
 
-	#MOSTRAR ARTÍCULOS
-	#------------------------------------------------------
-	public function mostrarArticulosModel($tabla){
+    public function borrarArticuloModel($datosModel, $tabla) {
 
-		$stmt = Conexion::conectar()->prepare("SELECT id, titulo, introduccion, ruta, contenido FROM $tabla ORDER BY orden ASC");
+        $stmt = Conexion::conectar()->prepare("DELETE FROM $tabla WHERE id = :id");
 
-		$stmt -> execute();
+        $stmt->bindParam(":id", $datosModel, PDO::PARAM_INT);
 
-		return $stmt -> fetchAll();
+        if ($stmt->execute()) {
 
-		$stmt -> close();
+            return "ok";
+        } else {
 
-	}
+            return "error";
+        }
 
-	#BORRAR ARTICULOS
-	#-----------------------------------------------------
-	public function borrarArticuloModel($datosModel, $tabla){
+        $stmt->close();
+    }
 
-		$stmt = Conexion::conectar()->prepare("DELETE FROM $tabla WHERE id = :id");
+    #ACTUALIZAR ARTICULOS
+    #---------------------------------------------------
 
-		$stmt->bindParam(":id", $datosModel, PDO::PARAM_INT);
+    public function editarArticuloModel($datosModel, $tabla) {
 
-		if($stmt->execute()){
+        $stmt = Conexion::conectar()->prepare("UPDATE $tabla SET estado = :estado, titulo = :titulo, introduccion = :introduccion, ruta = :ruta, contenido = :contenido, precio = :precio, idCategoria = :idCategoria WHERE id = :id");
 
-			return "ok";
+        $stmt->bindParam(":titulo", $datosModel["titulo"], PDO::PARAM_STR);
+        $stmt->bindParam(":introduccion", $datosModel["introduccion"], PDO::PARAM_STR);
+        $stmt->bindParam(":ruta", $datosModel["ruta"], PDO::PARAM_STR);
+        $stmt->bindParam(":contenido", $datosModel["contenido"], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $datosModel["id"], PDO::PARAM_INT);
+        $stmt->bindParam(":precio", $datosModel['precio']);
+        $stmt->bindParam(":idCategoria", $datosModel['idCategoria']);
+        $stmt->bindParam(":estado", $datosModel['estado']);
+        
+        try{
+            return $stmt->execute() ? "ok" : $stmt->errorInfo();
+        } catch (Exception $ex) {
+            return $ex->getTraceAsString();
+        } finally {
+            $stmt->closeCursor();
+        }
+    }
 
-		}
+    #ACTUALIZAR ORDEN 
+    #---------------------------------------------------
 
-		else{
+    public function actualizarOrdenModel($datos, $tabla) {
 
-			return "error";
+        $stmt = Conexion::conectar()->prepare("UPDATE $tabla SET orden = :orden WHERE id = :id");
 
-		}
+        $stmt->bindParam(":orden", $datos["ordenItem"], PDO::PARAM_STR);
+        $stmt->bindParam(":id", $datos["ordenArticulos"], PDO::PARAM_INT);
 
-		$stmt->close();
+        if ($stmt->execute()) {
 
-	}
+            return "ok";
+        } else {
+            return "error";
+        }
 
-	#ACTUALIZAR ARTICULOS
-	#---------------------------------------------------
-	public function editarArticuloModel($datosModel, $tabla){
+        $stmt->close();
+    }
 
-		$stmt = Conexion::conectar()->prepare("UPDATE $tabla SET titulo = :titulo, introduccion = :introduccion, ruta = :ruta, contenido = :contenido WHERE id = :id");	
+    #SELECCIONAR ORDEN 
+    #---------------------------------------------------
 
-		$stmt -> bindParam(":titulo", $datosModel["titulo"], PDO::PARAM_STR);
-		$stmt -> bindParam(":introduccion", $datosModel["introduccion"], PDO::PARAM_STR);
-		$stmt -> bindParam(":ruta", $datosModel["ruta"], PDO::PARAM_STR);
-		$stmt -> bindParam(":contenido", $datosModel["contenido"], PDO::PARAM_STR);
-		$stmt -> bindParam(":id", $datosModel["id"], PDO::PARAM_INT);
+    public function seleccionarOrdenModel($tabla) {
 
-		if($stmt->execute()){
+        $stmt = Conexion::conectar()->prepare("SELECT id, titulo, introduccion, ruta, contenido FROM $tabla ORDER BY orden ASC");
 
-			return "ok";
-		}
+        $stmt->execute();
 
-		else{
+        return $stmt->fetchAll();
 
-			return "error";
-		}
-
-		$stmt->close();
-
-	}
-
-	#ACTUALIZAR ORDEN 
-	#---------------------------------------------------
-	public function actualizarOrdenModel($datos, $tabla){
-
-		$stmt = Conexion::conectar()->prepare("UPDATE $tabla SET orden = :orden WHERE id = :id");
-
-		$stmt -> bindParam(":orden", $datos["ordenItem"], PDO::PARAM_STR);
-		$stmt -> bindParam(":id", $datos["ordenArticulos"], PDO::PARAM_INT);
-
-		if($stmt -> execute()){
-
-			return "ok";
-		}
-
-		else{
-			return "error";
-		}
-
-		$stmt -> close();
-
-	}
-
-	#SELECCIONAR ORDEN 
-	#---------------------------------------------------
-	public function seleccionarOrdenModel($tabla){
-
-		$stmt = Conexion::conectar()->prepare("SELECT id, titulo, introduccion, ruta, contenido FROM $tabla ORDER BY orden ASC");
-
-		$stmt -> execute();
-
-		return $stmt->fetchAll();
-
-		$stmt->close();
-
-	}
+        $stmt->close();
+    }
 
 }
